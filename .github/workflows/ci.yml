@@ -39,20 +39,21 @@ jobs:
         with:
           stdlib: true
 
-      # The `cli` package. coil-cli is private, so this needs a token that
-      # can read it (secret COIL_CLI_TOKEN).
+      # The `cli` package, at its main.
       - name: Check out coil-cli
         uses: actions/checkout@v4
         with:
           repository: ardax-corp/coil-cli
           path: .deps/coil-cli
-          token: ${{ secrets.COIL_CLI_TOKEN || github.token }}
 
       - name: Check formatting
         run: make fmt
 
       - name: Test
         run: make test COIL_ROOTS='--root ${{ steps.coil.outputs.stdlib }} --root .deps/coil-cli/src'
+
+      - name: Compile examples
+        run: make examples COIL_ROOTS='--root ${{ steps.coil.outputs.stdlib }} --root .deps/coil-cli/src'
 
       # Fail fast on pull requests: a failed job cancels the rest of the run,
       # so a quick fix doesn't wait behind jobs that are already moot.
