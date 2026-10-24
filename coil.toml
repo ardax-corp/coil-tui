@@ -1,0 +1,9 @@
+[package]
+name = "tui"
+version = "0.1.0"
+
+[dependencies]
+cli = { git = "https://github.com/ardax-corp/coil-cli.git", version = "latest" }
+
+[module]
+roots = ["./src", "../coil-stdlib/src", "../coil-cli/src"]
