@@ -12,7 +12,7 @@ use tui::canvas::Canvas;
 use tui::layout::Constraint;
 use tui::run::run;
 use tui::widgets::layout::column;
-use tui::widgets::layout::row;
+use tui::widgets::layout::flex;
 use tui::widgets::layout::block;
 use tui::widgets::text::text_fn;
 use tui::widgets::input::TextInput;
@@ -150,7 +150,7 @@ fn main() {
         [
             block("New", mount(input).fixed(1)),
             block("To do", tl).fill(1),
-            row([status, hints.fill(1)]).fixed(1),
+            mount(flex(true).add(status).add(hints.fill(1)).spaced(3)).fixed(1),
         ],
     );
     let r = run(root);

@@ -27,5 +27,5 @@ EXAMPLES_OUT ?= .examples
 examples:
 	mkdir -p $(EXAMPLES_OUT)
 	for f in examples/*.hy; do \
-		$(COIL) compile $(COIL_ROOTS) --root src -o $(EXAMPLES_OUT)/$$(basename $$f .hy).hyc $$f || exit 1; \
+		$(COIL) compile --allow-env $(COIL_ROOTS) --root src -o $(EXAMPLES_OUT)/$$(basename $$f .hy).hyc $$f || exit 1; \
 	done
