@@ -264,6 +264,22 @@ fn contains(Node root, Node target) -> bool {
     return false;
 }
 
+/// Whether `n` or a visible, enabled descendant can take focus.
+fn has_focusable(Node n) -> bool {
+    if !n.visible || n.disabled {
+        return false;
+    }
+    if n.can_focus() {
+        return true;
+    }
+    for k in n.children() {
+        if has_focusable(k) {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn same_node(Option<Node> a, Node b) -> bool {
     return match a {
         Option::Some(n) => n == b,
