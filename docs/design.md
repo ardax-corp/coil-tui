@@ -83,13 +83,24 @@ trait Component<T> {
 fn mount<T: Component>(T c) -> Node
 ```
 
-`mount` wraps the component in closures (`fn(Canvas, Ctx)`, ...), so a
-`Node` is one concrete class whatever the component type. Containers hold
-`Vec<Node>`. This is a workaround for coil-lang issue 1988: a class that holds
-trait-typed values cannot itself be used as a trait-typed value yet, so
-`Vec<Component>` children do not compile. With `mount` the author-facing
-API is the trait either way; if that issue is fixed, `Node` can become a
-thin wrapper without changing components.
+`mount` wraps the component in closures, so a `Node` is one concrete
+class whatever the component type, and containers hold `Vec<Node>`.
+Two compiler limits shape this:
+
+- A class that holds trait-typed values cannot itself be used as a
+  trait-typed value yet (coil-lang issue 1988), so `Vec<Component>`
+  children do not compile.
+- A function-typed field whose signature reaches back to its own class
+  crashes the compiler (coil-lang issue 1989). So the node's closures
+  take no `Ctx` (which holds nodes), and children are a plain field
+  (`Node.kids`, the vector `children()` returned at mount; a container
+  that pushes to that vector later is seen by the framework). The
+  closures fetch the running app's context from `tui::node::current()`,
+  which the app sets before every dispatch, tick and draw.
+
+The author-facing API is the `Component` trait either way. Once those
+issues are fixed, `Node` can drop the workarounds without changing
+components.
 
 A `Node` also carries what the framework needs per instance:
 
