@@ -1,0 +1,36 @@
+// The README example: a form with a text input and a button.
+//
+//   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/hello.hy
+use cell::Ref;
+use tui::node::Ctx;
+use tui::node::mount;
+use tui::run::run;
+use tui::widgets::layout::column;
+use tui::widgets::layout::row;
+use tui::widgets::layout::block;
+use tui::widgets::layout::spacer;
+use tui::widgets::text::text;
+use tui::widgets::text::text_fn;
+use tui::widgets::input::button;
+use tui::widgets::input::text_input;
+
+fn main() {
+    let name = text_input("Your name");
+    let greeting = Ref::new("");
+    let form = column(
+        [
+            row([text("Name: ").fixed(6), mount(name).fill(1)]).fixed(1),
+            button(
+                "Greet",
+                fn (Ctx c) use (name, greeting) {
+                    greeting.set("Hello, " + name.value() + "!");
+                },
+            ),
+            text_fn(fn () use (greeting) => greeting.get()),
+        ],
+    );
+    let root = column(
+        [block("Hello", form), spacer(), text("Tab moves, Enter presses, Ctrl-C quits")],
+    );
+    let _ = run(root);
+}

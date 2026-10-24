@@ -2,3 +2,4 @@
 target/
 coil.lock
 .deps/
+.examples/
