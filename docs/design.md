@@ -254,16 +254,16 @@ ships no native code and needs no `--allow-dload`.
 
 Each step is one PR into `main`, merged when CI is green.
 
-1. Scaffolding, CI, this doc.
-2. `geom`, `canvas`, `layout` (constraint solver).
-3. `node`, `theme`, `app` (layout and paint pass, dispatch, focus,
+1. Scaffolding, CI, this doc, `geom`, `canvas`, `layout` (constraint
+   solver).
+2. `node`, `theme`, `app` (layout and paint pass, dispatch, focus,
    layers, timers) and `testing`.
-4. Layout and display widgets: `Row`, `Column`, `Stack`, `Block`, `Pad`,
+3. Layout and display widgets: `Row`, `Column`, `Stack`, `Block`, `Pad`,
    `Center`, `Spacer`, `Text`, `Rule`.
-5. `Button`, `Checkbox`, `RadioGroup`, `TextInput`.
-6. `List`, `Scroll`, `Table`, `Tabs`.
-7. `Gauge`, `Spinner`, `KeyHints`, `Dialog`, `Menu`.
-8. `tui::run` and examples (todo list, file picker, dashboard), once
+4. `Button`, `Checkbox`, `RadioGroup`, `TextInput`.
+5. `List`, `Scroll`, `Table`, `Tabs`.
+6. `Gauge`, `Spinner`, `KeyHints`, `Dialog`, `Menu`.
+7. `tui::run` and examples (todo list, file picker, dashboard), once
    `cli::term` and `cli::events` are merged in coil-cli.
 
 Compiler or stdlib bugs found along the way are filed in coil-lang /
