@@ -251,6 +251,19 @@ fn set_current(Ctx c) {
     }
 }
 
+/// Whether `target` is `root` or one of its descendants.
+fn contains(Node root, Node target) -> bool {
+    if root == target {
+        return true;
+    }
+    for k in root.children() {
+        if contains(k, target) {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn same_node(Option<Node> a, Node b) -> bool {
     return match a {
         Option::Some(n) => n == b,
@@ -273,6 +286,17 @@ impl Ctx {
     pub fn has_focus() -> bool {
         return match self.current {
             Option::Some(n) => same_node(self.focused, n),
+            Option::None => false,
+        };
+    }
+
+    /// Whether focus is on the current node or inside it.
+    pub fn focus_within() -> bool {
+        return match self.current {
+            Option::Some(n) => match self.focused {
+                Option::Some(f) => contains(n, f),
+                Option::None => false,
+            },
             Option::None => false,
         };
     }
