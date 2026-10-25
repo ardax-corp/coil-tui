@@ -2,7 +2,6 @@
 // toggles done, d deletes (after asking), Tab moves between them.
 //
 //   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/todo.hy
-use io::IoError;
 use cli::keys::{Event, describe_key};
 use tui::node::Component;
 use tui::node::Node;
