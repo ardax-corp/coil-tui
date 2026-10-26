@@ -1,7 +1,10 @@
 // The terminal loop: full screen, raw input, timers, redraws. Everything
 // it drives lives in `tui::app`; this is the only module that needs a
 // real terminal (`cli::term`, `cli::events`).
-use io::{Stream, IoError, stdin, stdout};
+use io::Stream;
+use io::stdin;
+use io::stdout;
+use io::tty::TtyError;
 use clock::mono_nanos;
 use cli::ansi::enter_alt_screen;
 use cli::ansi::leave_alt_screen;
@@ -34,12 +37,12 @@ fn teardown() -> string {
 /// Run `root` full screen until something quits (`ctx.quit()`, Ctrl-C
 /// by default) or input ends. The terminal is restored on the way out,
 /// also after an error or a panic.
-fn run(Node root) -> Result<(), IoError> {
+fn run(Node root) -> Result<(), TtyError> {
     return run_app(app(root, color_level_from_env(stdout_is_tty())));
 }
 
 /// `run` for an `App` you set up yourself (theme, key bindings, timers).
-fn run_app(App a) -> Result<(), IoError> {
+fn run_app(App a) -> Result<(), TtyError> {
     let out = stdout();
     let raw = raw_mode(stdin())?;
     put(out, setup())?;
