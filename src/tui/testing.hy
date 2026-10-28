@@ -121,7 +121,7 @@ fn parse_key(string spec) -> Event {
 }
 
 /// A headless app of a fixed size, drawn after every input.
-class Harness {
+shared class Harness {
     pub app: App,
     /// The test clock in ms.
     pub now: int,

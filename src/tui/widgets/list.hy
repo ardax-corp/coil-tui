@@ -123,7 +123,7 @@ fn scrollbar(Canvas cv, int top, int h, int count, int offset, Style track, Styl
 
 /// A list of text rows with one selected. Up/Down/PageUp/PageDown/
 /// Home/End move, the wheel scrolls, a click selects, Enter activates.
-class List {
+shared class List {
     pub items: Vec<string>,
     pub sel: Selection,
     /// Drawn before the selected row ("" for none; other rows get as
@@ -289,7 +289,7 @@ fn table_column(string title, Constraint w) -> TableColumn {
 
 /// Rows of cells under a header, with one row selected; keys and mouse
 /// as for `List`.
-class Table {
+shared class Table {
     pub columns: Vec<TableColumn>,
     pub rows: Vec<Vec<string>>,
     pub sel: Selection,

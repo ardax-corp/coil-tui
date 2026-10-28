@@ -19,7 +19,7 @@ use tui::node::mount;
 /// A title bar over pages, one shown at a time. With the bar focused,
 /// Left/Right switch; Ctrl-PageUp/PageDown switch from anywhere inside;
 /// clicking a title switches to it.
-class Tabs {
+shared class Tabs {
     pub titles: Vec<string>,
     pub pages: Vec<Node>,
     pub active: int,

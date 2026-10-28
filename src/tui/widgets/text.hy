@@ -17,7 +17,7 @@ use tui::node::mount;
 
 /// Text: fixed (`content`) or computed on every draw (`source`), word
 /// wrapped by default, sized to its content.
-class Text {
+shared class Text {
     pub content: string,
     /// Called on every draw instead of using `content` when `dynamic`.
     pub source: fn() -> string,
@@ -112,7 +112,7 @@ fn text_fn(fn() -> string f) -> Node {
 }
 
 /// A horizontal line, with an optional label at its start.
-class Rule {
+shared class Rule {
     pub label: string,
     pub ch: string,
     pub style: Option<Style>,

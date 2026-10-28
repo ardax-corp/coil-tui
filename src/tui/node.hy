@@ -60,7 +60,7 @@ trait Component<T> {
 /// A component in the tree. Holds the component behind closures (so
 /// nodes of every component type share one class) plus per-node layout
 /// state.
-class Node {
+shared class Node {
     //
     // Closures rather than a trait-typed field: a class holding trait-typed
     // values cannot itself be used as one yet (coil-lang issue 1988).
@@ -183,7 +183,7 @@ impl Node {
 }
 
 /// A scheduled callback.
-class Timer {
+shared class Timer {
     pub id: int,
     pub due: int,
     /// Repeat interval in ms (0 = once).
@@ -195,7 +195,7 @@ class Timer {
 /// What handlers, callbacks and `render` get: the theme, the clock, who
 /// has focus, and requests to the app (quit, focus, layers, timers),
 /// which the app carries out after the handler returns.
-class Ctx {
+shared class Ctx {
     pub theme: Theme,
     /// Milliseconds, from the app's clock.
     pub now: int,

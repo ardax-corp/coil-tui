@@ -27,7 +27,7 @@ use tui::widgets::list::List;
 /// A box drawn on top of the layers below: its area is cleared, it is
 /// centred (or placed at `x`, `y` when `at` is set) at its measured
 /// size, and Esc closes it.
-class Popup {
+shared class Popup {
     pub child: Node,
     pub kids: Vec<Node>,
     pub at: bool,
