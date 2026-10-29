@@ -32,7 +32,7 @@ class Binding {
     pub f: fn(Ctx) -> (),
 }
 
-class App {
+shared class App {
     /// Base layer first; only the top one gets input and focus.
     layers: Vec<Node>,
     /// Focus to give back when the layer above is popped.

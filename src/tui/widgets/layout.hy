@@ -35,7 +35,7 @@ fn measures(Vec<Node> kids, Size max) -> Vec<Size> {
 
 /// Children side by side (`horizontal`) or one under another, sized by
 /// their constraints.
-class Flex {
+shared class Flex {
     pub kids: Vec<Node>,
     pub horizontal: bool,
     /// Cells between neighbours.
@@ -177,7 +177,7 @@ impl Flex {
 
 /// Children drawn on top of each other, each over the whole area (later
 /// ones on top).
-class Stack {
+shared class Stack {
     pub kids: Vec<Node>,
 }
 
@@ -204,7 +204,7 @@ fn stack(Vec<Node> kids) -> Node {
 }
 
 /// Space around one child.
-class Pad {
+shared class Pad {
     pub child: Node,
     pub top: int,
     pub right: int,
@@ -259,7 +259,7 @@ fn pad(int v, int h, Node child) -> Node {
 }
 
 /// `child` at its measured size, aligned inside the area.
-class Place {
+shared class Place {
     pub child: Node,
     pub ax: Align,
     pub ay: Align,
@@ -294,7 +294,7 @@ fn align(Align ax, Align ay, Node child) -> Node {
 }
 
 /// Empty space that takes what is left (`Fill(1)`).
-class Spacer {
+shared class Spacer {
     pub n: int,
 }
 
@@ -311,7 +311,7 @@ fn spacer() -> Node {
 }
 
 /// A border with an optional title around one child.
-class Block {
+shared class Block {
     pub child: Node,
     pub title: string,
     pub title_align: Align,

@@ -14,7 +14,7 @@ use tui::geom::{Rect, Align, rect};
 
 /// One frame being drawn: the buffer plus where the focused component
 /// wants the terminal cursor (absolute cell, or none).
-class Frame {
+shared class Frame {
     pub buf: Buffer,
     pub cursor_x: int,
     pub cursor_y: int,

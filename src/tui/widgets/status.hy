@@ -30,7 +30,7 @@ fn partial(int eighths) -> string {
 
 /// A horizontal bar showing `value` out of `max`, with a label after it
 /// ("" for the percentage).
-class Gauge {
+shared class Gauge {
     pub value: int,
     pub max: int,
     pub label: string,
@@ -97,7 +97,7 @@ fn gauge(int value, int max) -> Gauge {
 
 /// An animated spinner and a label. Starts ticking the first time it
 /// is drawn; stops when `done` is set.
-class Spinner {
+shared class Spinner {
     pub label: string,
     pub frames: Vec<string>,
     pub frame: int,
@@ -162,7 +162,7 @@ fn spinner(string label) -> Spinner {
 }
 
 /// A line of key hints: `^S save  q quit`.
-class KeyHints {
+shared class KeyHints {
     pub keys: Vec<string>,
     pub descriptions: Vec<string>,
 }

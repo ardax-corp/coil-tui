@@ -56,7 +56,7 @@ fn activates(Event e) -> bool {
 fn nothing(Ctx ctx) {}
 
 /// A push button: Enter, Space or a click calls `on_press`.
-class Button {
+shared class Button {
     pub label: string,
     pub on_press: fn(Ctx) -> (),
 }
@@ -103,7 +103,7 @@ fn button(string label, fn(Ctx) -> () on_press) -> Node {
 }
 
 /// `[x] label`; Enter, Space or a click toggles it.
-class Checkbox {
+shared class Checkbox {
     pub label: string,
     pub checked: bool,
     pub on_change: fn(bool, Ctx) -> (),
@@ -166,7 +166,7 @@ fn checkbox(string label, bool checked, fn(bool, Ctx) -> () on_change) -> Node {
 
 /// One choice out of several, listed top to bottom. Up/Down (or a
 /// click) select.
-class RadioGroup {
+shared class RadioGroup {
     pub options: Vec<string>,
     pub selected: int,
     pub on_change: fn(int, Ctx) -> (),
@@ -271,7 +271,7 @@ fn radio_group(Vec<string> options, int selected, fn(int, Ctx) -> () on_change) 
 /// A one-line text field with readline-style editing (`cli::line`).
 /// Tab, Esc and Ctrl-C are left to the app; Up/Down browse the history
 /// only when it has entries.
-class TextInput {
+shared class TextInput {
     pub editor: Editor,
     pub placeholder: string,
     /// Shown instead of each character when not "" (passwords).

@@ -20,7 +20,7 @@ use tui::widgets::list::scrollbar;
 /// PageUp/PageDown, the wheel, and (when the scroll itself has focus,
 /// because nothing inside can take it) Up/Down/Home/End. Keeps the
 /// focused node inside it in view.
-class Scroll {
+shared class Scroll {
     pub child: Node,
     pub kids: Vec<Node>,
     pub offset: int,
