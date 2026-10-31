@@ -18,24 +18,29 @@ use tui::node::mount;
 /// Text: fixed (`content`) or computed on every draw (`source`), word
 /// wrapped by default, sized to its content.
 shared class Text {
+    /// The text when not `dynamic`; `\n` starts a new line.
     pub content: string,
     /// Called on every draw instead of using `content` when `dynamic`.
     pub source: fn() -> string,
     // Not `Option<fn() -> string>`: coil-lang issue 1991.
 
+    /// Whether `source` is called instead of using `content`.
     pub dynamic: bool,
     /// `None` uses the theme's text style.
     pub style: Option<Style>,
+    /// Horizontal alignment of each line (`Start` by default).
     pub align: Align,
     /// Wrap at word boundaries; otherwise each line is cut with "…".
     pub wrapped: bool,
 }
 
 impl Text {
+    /// Fixed, wrapped, left-aligned `content` in the theme's text style.
     pub static fn new(string content) -> Text {
         return new Text(content, fn () => "", false, Option::None, Align::Start, true);
     }
 
+    /// The text as it would be drawn now.
     pub fn current() -> string {
         if self.dynamic {
             let f = self.source;
@@ -54,16 +59,19 @@ impl Text {
         return out;
     }
 
+    /// Draw in `s` instead of the theme's text style (builder style).
     pub fn styled(Style s) -> Text {
         self.style = Option::Some(s);
         return self;
     }
 
+    /// Align each line by `a` (builder style).
     pub fn aligned(Align a) -> Text {
         self.align = a;
         return self;
     }
 
+    /// Do not wrap: each line is cut with "…" (builder style).
     pub fn nowrap() -> Text {
         self.wrapped = false;
         return self;
@@ -95,10 +103,25 @@ impl Component for Text {
     }
 }
 
+/// A text node showing `s`, word wrapped and sized to its content.
+///
+/// # Examples
+///
+/// ```
+/// use tui::testing::harness;
+/// use tui::widgets::layout::column;
+/// use tui::widgets::text::{rule, text};
+/// # use tests::assert;
+/// let h = harness(column([text("one two three"), rule("End")]), 9, 3);
+/// assert!(h.row(0) == "one two  ");
+/// assert!(h.row(1) == "three    ");
+/// assert!(h.row(2) == "─ End ───");
+/// ```
 fn text(string s) -> Node {
     return mount(Text::new(s));
 }
 
+/// A text node showing `s` in style `st`.
 fn styled(string s, Style st) -> Node {
     return mount(Text::new(s).styled(st));
 }
@@ -113,8 +136,11 @@ fn text_fn(fn() -> string f) -> Node {
 
 /// A horizontal line, with an optional label at its start.
 shared class Rule {
+    /// Text drawn near the start of the line ("" for none).
     pub label: string,
+    /// The line character (`─`).
     pub ch: string,
+    /// `None` uses the theme's border style.
     pub style: Option<Style>,
 }
 
@@ -136,6 +162,8 @@ impl Component for Rule {
     }
 }
 
+/// A one-row horizontal rule with `label` at its start ("" for a plain
+/// line).
 fn rule(string label) -> Node {
     return mount(new Rule(label, "─", Option::None));
 }

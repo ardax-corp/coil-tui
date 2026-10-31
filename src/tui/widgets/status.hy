@@ -14,7 +14,7 @@ use tui::node::Node;
 use tui::node::Ctx;
 use tui::node::mount;
 
-/// Eighths of a cell, for smooth bar ends.
+// Eighths of a cell, for smooth bar ends.
 fn partial(int eighths) -> string {
     return match eighths {
         1 => "▏",
@@ -31,17 +31,24 @@ fn partial(int eighths) -> string {
 /// A horizontal bar showing `value` out of `max`, with a label after it
 /// ("" for the percentage).
 shared class Gauge {
+    /// Progress so far.
     pub value: int,
+    /// The value of a full bar.
     pub max: int,
+    /// Text after the bar ("" for the percentage).
     pub label: string,
+    /// Bar style; `None` uses the theme's accent.
     pub style: Option<Style>,
 }
 
 impl Gauge {
+    /// A gauge at `value` of `max`, labelled with the percentage.
     pub static fn new(int value, int max) -> Gauge {
         return new Gauge(value, max, "", Option::None);
     }
 
+    /// Set the progress. It shows in the next frame the app draws, which
+    /// follows any handled event or timer.
     pub fn set(int value) {
         self.value = value;
     }
@@ -91,6 +98,25 @@ impl Component for Gauge {
     }
 }
 
+/// A `Gauge` at `value` of `max`; keep it to `set` progress and `mount`
+/// it to show it.
+///
+/// # Examples
+///
+/// ```
+/// use text::Searchable;
+/// use tui::node::mount;
+/// use tui::testing::harness;
+/// use tui::widgets::status::gauge;
+/// # use tests::assert;
+/// let g = gauge(1, 4);
+/// let h = harness(mount(g), 20, 1);
+/// assert!(g.percent() == 25 && h.row(0).contains("25%"));
+/// g.set(4);
+/// h.app.invalidate();
+/// h.draw();
+/// assert!(h.row(0).contains("100%"));
+/// ```
 fn gauge(int value, int max) -> Gauge {
     return Gauge::new(value, max);
 }
@@ -98,16 +124,22 @@ fn gauge(int value, int max) -> Gauge {
 /// An animated spinner and a label. Starts ticking the first time it
 /// is drawn; stops when `done` is set.
 shared class Spinner {
+    /// Text after the spinner.
     pub label: string,
+    /// The animation frames (braille dots by default).
     pub frames: Vec<string>,
+    /// Index of the frame shown.
     pub frame: int,
     /// Milliseconds per frame.
     pub interval: int,
+    /// Set by `stop`: the animation is gone and only the label is drawn.
     pub done: bool,
+    /// Id of the frame timer (0 when not running).
     pub timer: int,
 }
 
 impl Spinner {
+    /// A spinner with `label`, braille frames every 80ms.
     pub static fn new(string label) -> Spinner {
         let frames: Vec<string> = [
             "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏",
@@ -115,6 +147,7 @@ impl Spinner {
         return new Spinner(label, frames, 0, 80, false, 0);
     }
 
+    /// Stop the animation and redraw with the label alone.
     pub fn stop(Ctx ctx) {
         self.done = true;
         ctx.redraw();
@@ -124,6 +157,8 @@ impl Spinner {
         }
     }
 
+    /// Start the frame timer (done by the first draw; nothing once started
+    /// or stopped).
     pub fn start(Ctx ctx) {
         if self.timer != 0 || self.done {
             return;
@@ -157,17 +192,22 @@ impl Component for Spinner {
     }
 }
 
+/// A `Spinner` with `label`; keep it to `stop` it and `mount` it to show
+/// it.
 fn spinner(string label) -> Spinner {
     return Spinner::new(label);
 }
 
 /// A line of key hints: `^S save  q quit`.
 shared class KeyHints {
+    /// Key names, drawn in the accent style.
     pub keys: Vec<string>,
+    /// What each key does, drawn muted.
     pub descriptions: Vec<string>,
 }
 
 impl KeyHints {
+    /// Append a hint (builder style).
     pub fn add(string key, string description) -> KeyHints {
         self.keys.push(key);
         self.descriptions.push(description);
@@ -204,7 +244,18 @@ impl Component for KeyHints {
     }
 }
 
-/// Start with `key_hints().add("q", "quit").add("?", "help")`.
+/// An empty hint line; add hints with `add`, then `mount` it.
+///
+/// # Examples
+///
+/// ```
+/// use tui::node::mount;
+/// use tui::testing::harness;
+/// use tui::widgets::status::key_hints;
+/// # use tests::assert;
+/// let h = harness(mount(key_hints().add("q", "quit").add("?", "help")), 16, 1);
+/// assert!(h.row(0) == "q quit  ? help  ");
+/// ```
 fn key_hints() -> KeyHints {
     return new KeyHints(Vec::new(), Vec::new());
 }

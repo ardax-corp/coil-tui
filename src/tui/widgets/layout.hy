@@ -20,7 +20,7 @@ use tui::node::Node;
 use tui::node::Ctx;
 use tui::node::mount;
 
-/// The sizes of `kids` when each may take up to `max`.
+// The sizes of `kids` when each may take up to `max`.
 fn measures(Vec<Node> kids, Size max) -> Vec<Size> {
     let out: Vec<Size> = Vec::new();
     for k in kids {
@@ -36,7 +36,9 @@ fn measures(Vec<Node> kids, Size max) -> Vec<Size> {
 /// Children side by side (`horizontal`) or one under another, sized by
 /// their constraints.
 shared class Flex {
+    /// The children, in order.
     pub kids: Vec<Node>,
+    /// Side by side (`true`) or one under another.
     pub horizontal: bool,
     /// Cells between neighbours.
     pub gap: int,
@@ -45,6 +47,8 @@ shared class Flex {
 }
 
 impl Flex {
+    /// A row (`horizontal`) or column of `kids`, no gap, children stretched
+    /// on the cross axis.
     pub static fn new(bool horizontal, Vec<Node> kids) -> Flex {
         return new Flex(kids, horizontal, 0, Align::Stretch);
     }
@@ -142,7 +146,22 @@ impl Component for Flex {
 // than `Node... kids`: a typed variadic cannot be called from another
 // module yet (coil-lang issue 1990).
 
-/// Children left to right: `row([a, b, c])`.
+/// Children left to right: `row([a, b, c])`, each sized on the main
+/// axis by its node's constraint (`fixed`, `fill`, `auto`, ...).
+///
+/// # Examples
+///
+/// ```
+/// use tui::testing::harness;
+/// use tui::widgets::layout::{block, column, row, spacer};
+/// use tui::widgets::text::text;
+/// # use tests::assert;
+/// let top = row([text("L").fixed(3), text("R").fill(1)]).fixed(1);
+/// let h = harness(block("Box", column([top, spacer()])), 10, 4);
+/// assert!(h.row(0) == "┌ Box ───┐");
+/// assert!(h.row(1) == "│L  R    │");
+/// assert!(h.row(3) == "└────────┘");
+/// ```
 fn row(Vec<Node> kids) -> Node {
     return mount(Flex::new(true, kids));
 }
@@ -159,16 +178,19 @@ fn flex(bool horizontal) -> Flex {
 }
 
 impl Flex {
+    /// Append a child (builder style).
     pub fn add(Node n) -> Flex {
         self.kids.push(n);
         return self;
     }
 
+    /// Put `gap` cells between neighbours (builder style).
     pub fn spaced(int gap) -> Flex {
         self.gap = gap;
         return self;
     }
 
+    /// Place children on the cross axis by `a` (builder style).
     pub fn aligned(Align a) -> Flex {
         self.align = a;
         return self;
@@ -178,6 +200,7 @@ impl Flex {
 /// Children drawn on top of each other, each over the whole area (later
 /// ones on top).
 shared class Stack {
+    /// The layers, bottom first.
     pub kids: Vec<Node>,
 }
 
@@ -199,17 +222,24 @@ impl Component for Stack {
     }
 }
 
+/// `kids` drawn over each other, each over the whole area.
 fn stack(Vec<Node> kids) -> Node {
     return mount(new Stack(kids));
 }
 
 /// Space around one child.
 shared class Pad {
+    /// The padded child.
     pub child: Node,
+    /// Blank rows above.
     pub top: int,
+    /// Blank columns on the right.
     pub right: int,
+    /// Blank rows below.
     pub bottom: int,
+    /// Blank columns on the left.
     pub left: int,
+    /// `[child]`, for `children`.
     pub kids: Vec<Node>,
 }
 
@@ -237,8 +267,8 @@ impl Component for Pad {
     }
 }
 
-/// `c` for a wrapper that adds `by` cells around its child: a fixed
-/// size grows, anything else is kept.
+// `c` for a wrapper that adds `by` cells around its child: a fixed
+// size grows, anything else is kept.
 fn grow(Constraint c, int by) -> Constraint {
     return match c {
         Constraint::Fixed(n) => Constraint::Fixed(n + by),
@@ -260,9 +290,13 @@ fn pad(int v, int h, Node child) -> Node {
 
 /// `child` at its measured size, aligned inside the area.
 shared class Place {
+    /// The placed child.
     pub child: Node,
+    /// Horizontal alignment.
     pub ax: Align,
+    /// Vertical alignment.
     pub ay: Align,
+    /// `[child]`, for `children`.
     pub kids: Vec<Node>,
 }
 
@@ -285,16 +319,19 @@ impl Component for Place {
     }
 }
 
+/// `child` at its measured size, centred in the area.
 fn center(Node child) -> Node {
     return mount(new Place(child, Align::Center, Align::Center, one(child)));
 }
 
+/// `child` at its measured size, aligned by `ax` and `ay`.
 fn align(Align ax, Align ay, Node child) -> Node {
     return mount(new Place(child, ax, ay, one(child)));
 }
 
 /// Empty space that takes what is left (`Fill(1)`).
 shared class Spacer {
+    /// Unused; the spacer has no settings.
     pub n: int,
 }
 
@@ -306,44 +343,55 @@ impl Component for Spacer {
     }
 }
 
+/// Empty space taking what is left in a row or column.
 fn spacer() -> Node {
     return mount(new Spacer(0));
 }
 
 /// A border with an optional title around one child.
 shared class Block {
+    /// The bordered child.
     pub child: Node,
+    /// Title on the top border ("" for none).
     pub title: string,
+    /// Where the title sits on the top border.
     pub title_align: Align,
+    /// The border characters (`light_box()` by default).
     pub chars: BoxChars,
     /// Blank cells inside the border.
     pub padding: int,
     /// Border style; `None` uses the theme (focused style when focus is
     /// inside).
     pub style: Option<Style>,
+    /// `[child]`, for `children`.
     pub kids: Vec<Node>,
 }
 
 impl Block {
+    /// `child` in a light border titled `title`, no padding.
     pub static fn new(string title, Node child) -> Block {
         return new Block(child, title, Align::Start, light_box(), 0, Option::None, one(child));
     }
 
+    /// Use rounded corners (builder style).
     pub fn rounded() -> Block {
         self.chars = rounded_box();
         return self;
     }
 
+    /// Leave `n` blank cells inside the border (builder style).
     pub fn padded(int n) -> Block {
         self.padding = n;
         return self;
     }
 
+    /// Draw the border in `s` always (builder style).
     pub fn styled(Style s) -> Block {
         self.style = Option::Some(s);
         return self;
     }
 
+    /// Place the title by `a` (builder style).
     pub fn title_at(Align a) -> Block {
         self.title_align = a;
         return self;

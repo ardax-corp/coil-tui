@@ -28,21 +28,29 @@ use tui::widgets::list::List;
 /// centred (or placed at `x`, `y` when `at` is set) at its measured
 /// size, and Esc closes it.
 shared class Popup {
+    /// The popup's content.
     pub child: Node,
+    /// `[child]`, for `children`.
     pub kids: Vec<Node>,
+    /// Place at (`x`, `y`) instead of centring.
     pub at: bool,
+    /// Column of the top-left corner when `at` is set (kept on screen).
     pub x: int,
+    /// Row of the top-left corner when `at` is set (kept on screen).
     pub y: int,
+    /// Called after Esc closed the popup.
     pub on_close: fn(Ctx) -> (),
 }
 
 impl Popup {
+    /// A centred popup around `child`.
     pub static fn new(Node child) -> Popup {
         let kids: Vec<Node> = Vec::new();
         kids.push(child);
         return new Popup(child, kids, false, 0, 0, fn (Ctx c) {});
     }
 
+    /// Where the popup goes inside `area`, at the child's measured size.
     pub fn place(Rect area) -> Rect {
         let m = self.child.measure(area.size());
         if self.at {
@@ -118,8 +126,34 @@ fn alert(Ctx ctx, string title, string message) {
     );
 }
 
-/// Ask a yes/no question; `answer` gets true for Yes, false for No or
-/// Esc.
+/// Ask a yes/no question in a dialog; `answer` gets true for Yes, false
+/// for No. Esc closes the dialog without calling `answer`.
+///
+/// # Examples
+///
+/// ```
+/// use cell::Ref;
+/// use tui::node::Ctx;
+/// use tui::testing::harness;
+/// use tui::widgets::dialog::confirm;
+/// use tui::widgets::input::button;
+/// # use tests::assert;
+/// let said = Ref::new("");
+/// let root = button("Delete", fn (Ctx c) use (said) {
+///     confirm(c, "Delete", "Really?", fn (bool yes, Ctx c2) use (said) {
+///         if yes {
+///             said.set("yes");
+///         } else {
+///             said.set("no");
+///         }
+///     });
+/// });
+/// let h = harness(root, 30, 10);
+/// h.key("enter");
+/// assert!(h.app.layer_count() == 2);
+/// h.key("enter");
+/// assert!(said.get() == "yes" && h.app.layer_count() == 1);
+/// ```
 fn confirm(Ctx ctx, string title, string message, fn(bool, Ctx) -> () answer) {
     let d = dialog(
         title,
