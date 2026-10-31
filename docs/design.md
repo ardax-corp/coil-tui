@@ -34,7 +34,7 @@ The last one is a likely follow-up.
 | `cli::style`, `cli::color` | `Style`, `Color`, colour level detection |
 | `cli::width` | display width, truncate, pad, wrap |
 | `cli::line` | line editor model (used by `TextInput`) |
-| `cli::term`, `cli::events` | raw mode, size, timed event reads (the runner only; not merged yet) |
+| `cli::term`, `cli::events` | raw mode, size, timed event reads (the runner only) |
 | `cli::ansi` | alt screen, cursor show/hide/move, mouse and paste modes |
 
 Only the runner (`tui::run`) needs `cli::term`/`cli::events`. Everything
