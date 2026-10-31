@@ -2,10 +2,13 @@
 
 /// A width and height in cells.
 class Size {
+    /// Width in cells.
     pub w: int,
+    /// Height in cells.
     pub h: int,
 }
 
+/// A `w` by `h` size; negative values become 0.
 fn size(int w, int h) -> Size {
     return new Size(max0(w), max0(h));
 }
@@ -17,6 +20,7 @@ fn max0(int n) -> int {
     return n;
 }
 
+/// The smaller of `a` and `b`.
 fn imin(int a, int b) -> int {
     if a < b {
         return a;
@@ -24,6 +28,7 @@ fn imin(int a, int b) -> int {
     return b;
 }
 
+/// The larger of `a` and `b`.
 fn imax(int a, int b) -> int {
     if a > b {
         return a;
@@ -38,51 +43,81 @@ fn clamp(int v, int lo, int hi) -> int {
 
 /// Alignment on one axis.
 enum Align {
+    /// At the start: left or top.
     Start,
+    /// Centred (an odd leftover cell goes after).
     Center,
+    /// At the end: right or bottom.
     End,
     /// Take the whole axis.
     Stretch,
 }
 
 /// A rectangle of cells: top-left corner (`x`, `y`) and size. Width and
-/// height are never negative.
+/// height are never negative. The right and bottom edges are exclusive.
+///
+/// # Examples
+///
+/// ```
+/// use tui::geom::{Align, rect};
+/// # use tests::assert;
+/// let r = rect(2, 1, 10, 4);
+/// assert!(r.right() == 12 && r.bottom() == 5);
+/// assert!(r.contains(11, 4) && !r.contains(12, 4));
+/// let inner = r.shrink(1);
+/// assert!(inner.eq(rect(3, 2, 8, 2)));
+/// let c = r.place(4, 2, Align::Center, Align::End);
+/// assert!(c.eq(rect(5, 3, 4, 2)));
+/// assert!(r.intersect(rect(20, 20, 3, 3)).is_empty());
+/// ```
 class Rect {
+    /// Left column.
     pub x: int,
+    /// Top row.
     pub y: int,
+    /// Width in cells.
     pub w: int,
+    /// Height in cells.
     pub h: int,
 }
 
+/// A rect at (`x`, `y`), `w` by `h`; a negative size becomes 0.
 fn rect(int x, int y, int w, int h) -> Rect {
     return new Rect(x, y, max0(w), max0(h));
 }
 
+/// The empty rect at (0, 0).
 fn empty() -> Rect {
     return rect(0, 0, 0, 0);
 }
 
 impl Rect {
+    /// The column just past the right edge (`x + w`).
     pub fn right() -> int {
         return self.x + self.w;
     }
 
+    /// The row just past the bottom edge (`y + h`).
     pub fn bottom() -> int {
         return self.y + self.h;
     }
 
+    /// Whether the rect has no cells (zero width or height).
     pub fn is_empty() -> bool {
         return self.w == 0 || self.h == 0;
     }
 
+    /// Width and height as a `Size`.
     pub fn size() -> Size {
         return new Size(self.w, self.h);
     }
 
+    /// Whether both rects have the same corner and size.
     pub fn eq(Rect o) -> bool {
         return self.x == o.x && self.y == o.y && self.w == o.w && self.h == o.h;
     }
 
+    /// Whether cell (`px`, `py`) is inside.
     pub fn contains(int px, int py) -> bool {
         return px >= self.x && py >= self.y && px < self.right() && py < self.bottom();
     }
@@ -129,7 +164,7 @@ impl Rect {
     }
 }
 
-/// Start and length of `want` cells aligned within `start..start+len`.
+// Start and length of `want` cells aligned within `start..start+len`.
 fn place_axis(int start, int len, int want, Align a) -> (int, int) {
     let n = clamp(want, 0, len);
     return match a {

@@ -15,12 +15,17 @@ use tui::geom::{Rect, Align, rect};
 /// One frame being drawn: the buffer plus where the focused component
 /// wants the terminal cursor (absolute cell, or none).
 shared class Frame {
+    /// The cells being drawn.
     pub buf: Buffer,
+    /// Column of the requested terminal cursor (with `has_cursor`).
     pub cursor_x: int,
+    /// Row of the requested terminal cursor (with `has_cursor`).
     pub cursor_y: int,
+    /// Whether a component asked for the cursor this frame.
     pub has_cursor: bool,
 }
 
+/// A frame drawing into `buf`, with no cursor requested.
 fn frame(Buffer buf) -> Frame {
     return new Frame(buf, 0, 0, false);
 }
@@ -33,10 +38,30 @@ fn piece(string s, int from, int to) -> string {
 }
 
 /// A view onto a `Frame`: local (0, 0) is `area`'s corner, and nothing
-/// is drawn outside `clip` (absolute coordinates, inside `area`).
+/// is drawn outside `clip` (absolute coordinates, inside `area`). A
+/// component's `render` gets one sized to its node.
+///
+/// # Examples
+///
+/// ```
+/// use tui::canvas::{canvas, frame};
+/// use tui::geom::{Align, rect};
+/// use cli::screen::buffer;
+/// use cli::style::plain;
+/// # use tests::assert;
+/// let f = frame(buffer(12, 2));
+/// let c = canvas(f).sub(rect(2, 0, 6, 2));
+/// c.put(0, 0, "clipped text", plain());
+/// c.put_in(0, 1, 6, "ok", plain(), Align::End);
+/// assert!(f.buf.row_text(0) == "  clippe    ");
+/// assert!(f.buf.row_text(1) == "      ok    ");
+/// ```
 class Canvas {
+    /// The frame drawn into.
     pub frame: Frame,
+    /// The component's area, in absolute cells.
     pub area: Rect,
+    /// Where drawing lands, in absolute cells (inside `area`).
     pub clip: Rect,
 }
 
@@ -52,6 +77,7 @@ impl Canvas {
         return self.area.w;
     }
 
+    /// Height of the area in cells.
     pub fn h() -> int {
         return self.area.h;
     }
@@ -177,10 +203,12 @@ impl Canvas {
         }
     }
 
+    /// A horizontal line of `w` cells of `ch` from local (`x`, `y`).
     pub fn hline(int x, int y, int w, string ch, Style style) {
         self.fill(x, y, w, 1, ch, style);
     }
 
+    /// A vertical line of `h` cells of `ch` from local (`x`, `y`).
     pub fn vline(int x, int y, int h, string ch, Style style) {
         self.fill(x, y, 1, h, ch, style);
     }
