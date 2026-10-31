@@ -120,8 +120,36 @@ fn parse_key(string spec) -> Event {
     };
 }
 
-/// A headless app of a fixed size, drawn after every input.
+/// A headless app of a fixed size, drawn after every input: the way to
+/// test a UI. Send keys, text, clicks and time, then read the screen back
+/// as text.
+///
+/// # Examples
+///
+/// ```
+/// use cell::Ref;
+/// use tui::node::{Ctx, mount};
+/// use tui::testing::harness;
+/// use tui::widgets::layout::column;
+/// use tui::widgets::input::{button, text_input};
+/// use tui::widgets::text::text_fn;
+/// # use tests::assert;
+/// let name = text_input("Your name");
+/// let greeting = Ref::new("");
+/// let root = column([
+///     mount(name).fixed(1),
+///     button("Greet", fn (Ctx c) use (name, greeting) {
+///         greeting.set("Hello, " + name.value() + "!");
+///     }).fixed(1),
+///     text_fn(fn () use (greeting) => greeting.get()),
+/// ]);
+/// let h = harness(root, 20, 4);
+/// h.type_text("Ada");
+/// h.keys("tab enter");
+/// assert!(h.row(2) == "Hello, Ada!         ");
+/// ```
 shared class Harness {
+    /// The app being driven.
     pub app: App,
     /// The test clock in ms.
     pub now: int,
@@ -129,6 +157,8 @@ shared class Harness {
     pub out: string,
 }
 
+/// A harness running `root` in a `cols` by `rows` screen with colour
+/// off, drawn once already.
 fn harness(Node root, int cols, int rows) -> Harness {
     let a = app(root, ColorLevel::None);
     a.resize(cols, rows);
@@ -138,6 +168,7 @@ fn harness(Node root, int cols, int rows) -> Harness {
 }
 
 impl Harness {
+    /// Draw now and return the escapes (also kept in `out`).
     pub fn draw() -> string {
         self.out = self.app.draw();
         return self.out;
@@ -150,6 +181,8 @@ impl Harness {
         return handled;
     }
 
+    /// Send the key `spec` (see `parse_key`) and redraw. Returns whether it
+    /// was handled.
     pub fn key(string spec) -> bool {
         return self.send(parse_key(spec));
     }
@@ -175,6 +208,7 @@ impl Harness {
         }
     }
 
+    /// Send `s` as a bracketed paste and redraw.
     pub fn paste(string s) -> bool {
         return self.send(Event::Paste(s));
     }
@@ -190,6 +224,7 @@ impl Harness {
         self.mouse(MouseKind::Release, MouseButton::Left, x, y);
     }
 
+    /// A wheel step up or down at 0-based cell (`x`, `y`).
     pub fn wheel(int x, int y, bool up) -> bool {
         if up {
             return self.mouse(MouseKind::Press, MouseButton::WheelUp, x, y);
@@ -204,6 +239,7 @@ impl Harness {
         self.draw();
     }
 
+    /// Resize the screen, as a terminal resize would.
     pub fn resize(int cols, int rows) {
         self.send(Event::Resize(cols, rows));
     }
@@ -213,14 +249,18 @@ impl Harness {
         return self.app.last.text();
     }
 
+    /// Row `y` of the screen as text.
     pub fn row(int y) -> string {
         return self.app.last.row_text(y);
     }
 
+    /// The cell at (`x`, `y`), with its style.
     pub fn cell(int x, int y) -> Cell {
         return self.app.last.get(x, y);
     }
 
+    /// The id of the focused node ("" when it has none, or nothing is
+    /// focused).
     pub fn focused_id() -> string {
         return self.app.focused_id();
     }

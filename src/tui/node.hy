@@ -15,6 +15,44 @@ use tui::theme::default_theme;
 ///
 /// Components are ordinary objects that keep their own state; `mount`
 /// turns one into a `Node` for the tree.
+///
+/// # Examples
+///
+/// ```
+/// use cli::keys::{Event, is_key};
+/// use tui::canvas::Canvas;
+/// use tui::node::{Component, Ctx, mount};
+/// use tui::testing::harness;
+/// use string::format;
+/// # use tests::assert;
+/// shared class Counter {
+///     n: int,
+/// }
+///
+/// impl Component for Counter {
+///     fn render(Counter c, Canvas cv, Ctx ctx) {
+///         cv.put(0, 0, format("count: %i", c.n), ctx.theme.text);
+///     }
+///
+///     fn focusable(Counter c) -> bool {
+///         return true;
+///     }
+///
+///     fn handle(Counter c, Event e, Ctx ctx) -> bool {
+///         if is_key(e, "i") {
+///             c.n++;
+///             return true;
+///         }
+///         return false;
+///     }
+/// }
+///
+/// fn main() {
+///     let h = harness(mount(new Counter(0)), 12, 1);
+///     h.keys("i i");
+///     assert!(h.row(0) == "count: 2    ");
+/// }
+/// ```
 trait Component<T> {
     /// Draw into `c`, whose (0, 0) is this component's top-left corner.
     fn render(T c, Canvas cv, Ctx ctx) {}
@@ -31,6 +69,7 @@ trait Component<T> {
         return false;
     }
 
+    /// Whether this component can take keyboard focus (Tab stops on it).
     fn focusable(T c) -> bool {
         return false;
     }
@@ -67,12 +106,15 @@ shared class Node {
 
     /// Name for `App.find` and tests ("" = none).
     pub id: string,
+    /// How a row or column sizes this node on its main axis.
     pub constraint: Constraint,
     /// Absolute area from the last draw.
     pub rect: Rect,
     /// The visible part of `rect` (clipped by ancestors).
     pub clip: Rect,
+    /// Whether the node is laid out and drawn at all (see `hidden`).
     pub visible: bool,
+    /// Whether the node is skipped by focus (see `enabled`).
     pub disabled: bool,
     /// The component's children (the vector it returned from
     /// `children()` at mount; a container that adds to its own vector
@@ -106,16 +148,19 @@ fn mount<T: Component>(T c) -> Node {
 }
 
 impl Node {
+    /// Draw the component into `cv`.
     pub fn render(Canvas cv) {
         let f = self.render_f;
         f(cv);
     }
 
+    /// The component's preferred size within `max`.
     pub fn measure(Size max) -> Size {
         let f = self.measure_f;
         return f(max);
     }
 
+    /// Offer `e` to the component; true when it was consumed.
     pub fn handle(Event e) -> bool {
         let f = self.handle_f;
         return f(e);
@@ -127,10 +172,12 @@ impl Node {
         return self.visible && !self.disabled && f();
     }
 
+    /// The child nodes, in paint and focus order.
     pub fn children() -> Vec<Node> {
         return self.kids;
     }
 
+    /// The children's rects inside `area` (local coordinates).
     pub fn arrange(Rect area) -> Vec<Rect> {
         let f = self.arrange_f;
         return f(area);
@@ -142,40 +189,49 @@ impl Node {
         return self;
     }
 
+    /// Set the constraint (builder style).
     pub fn sized(Constraint c) -> Node {
         self.constraint = c;
         return self;
     }
 
+    /// Exactly `n` cells on the parent's main axis.
     pub fn fixed(int n) -> Node {
         return self.sized(Constraint::Fixed(n));
     }
 
+    /// `p` percent of the parent's space.
     pub fn percent(int p) -> Node {
         return self.sized(Constraint::Percent(p));
     }
 
+    /// A `weight` share of the leftover space.
     pub fn fill(int weight) -> Node {
         return self.sized(Constraint::Fill(weight));
     }
 
+    /// The component's measured size.
     pub fn auto() -> Node {
         return self.sized(Constraint::Auto);
     }
 
+    /// At least `n` cells, growing like `fill(1)`.
     pub fn min(int n) -> Node {
         return self.sized(Constraint::Min(n));
     }
 
+    /// Grows like `fill(1)`, up to `n` cells.
     pub fn max(int n) -> Node {
         return self.sized(Constraint::Max(n));
     }
 
+    /// Hide the node (`true`) or show it again; hidden nodes take no space.
     pub fn hidden(bool h) -> Node {
         self.visible = !h;
         return self;
     }
 
+    /// Enable or disable the node; disabled nodes do not take focus.
     pub fn enabled(bool on) -> Node {
         self.disabled = !on;
         return self;
@@ -184,11 +240,15 @@ impl Node {
 
 /// A scheduled callback.
 shared class Timer {
+    /// The id `after` / `every` returned, for `Ctx.cancel`.
     pub id: int,
+    /// When it runs next, in ms on the app's clock.
     pub due: int,
     /// Repeat interval in ms (0 = once).
     pub every: int,
+    /// The callback.
     pub f: fn(Ctx) -> (),
+    /// Set by `Ctx.cancel`; the app drops it.
     pub cancelled: bool,
 }
 
@@ -196,23 +256,32 @@ shared class Timer {
 /// has focus, and requests to the app (quit, focus, layers, timers),
 /// which the app carries out after the handler returns.
 shared class Ctx {
+    /// The styles to draw with.
     pub theme: Theme,
     /// Milliseconds, from the app's clock.
     pub now: int,
     /// The node being rendered or handling an event.
     pub current: Option<Node>,
+    /// The node that has keyboard focus.
     pub focused: Option<Node>,
+    /// Set by `quit`.
     pub quit_requested: bool,
+    /// Set by `redraw`.
     pub redraw_requested: bool,
+    /// Set by `focus`.
     pub focus_request: Option<Node>,
     /// +1 next, -1 previous, 0 none.
     pub focus_step: int,
+    /// Layers `push_layer` opened since the app last looked.
     pub pushes: Vec<Node>,
+    /// How many `pop_layer` calls are pending.
     pub pops: int,
+    /// Scheduled callbacks.
     pub timers: Vec<Timer>,
     next_timer: int,
 }
 
+/// A fresh context: the default theme, clock at 0, nothing focused.
 fn ctx() -> Ctx {
     return new Ctx(
         default_theme(),
@@ -317,6 +386,7 @@ impl Ctx {
         };
     }
 
+    /// Whether `n` has focus.
     pub fn is_focused(Node n) -> bool {
         return same_node(self.focused, n);
     }
@@ -326,10 +396,12 @@ impl Ctx {
         self.focus_request = Option::Some(n);
     }
 
+    /// Move focus to the next focusable node (as Tab does).
     pub fn focus_next() {
         self.focus_step = 1;
     }
 
+    /// Move focus to the previous focusable node (as Shift-Tab does).
     pub fn focus_prev() {
         self.focus_step = -1;
     }
@@ -366,6 +438,7 @@ impl Ctx {
         return self.add_timer(step, step, f);
     }
 
+    /// Cancel the timer `id` (from `after` or `every`).
     pub fn cancel(int id) {
         for t in self.timers {
             if t.id == id {

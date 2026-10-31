@@ -36,12 +36,30 @@ fn teardown() -> string {
 
 /// Run `root` full screen until something quits (`ctx.quit()`, Ctrl-C
 /// by default) or input ends. The terminal is restored on the way out,
-/// also after an error or a panic.
+/// also after an error or a panic. The colour level comes from the
+/// environment, so the program needs `--allow-env`; `run_app` takes an
+/// `App` with the level already chosen.
 fn run(Node root) -> Result<(), TtyError> {
     return run_app(app(root, color_level_from_env(stdout_is_tty())));
 }
 
 /// `run` for an `App` you set up yourself (theme, key bindings, timers).
+/// `Err` when stdin is not a terminal or writing to it fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// use cli::color::ColorLevel;
+/// use io::tty::TtyError;
+/// use tui::app::app;
+/// use tui::run::run_app;
+/// use tui::widgets::text::text;
+/// fn main() -> Result<(), TtyError> {
+///     let a = app(text("Hello! Ctrl-C quits."), ColorLevel::Basic);
+///     a.bind("q", fn (tui::node::Ctx c) => c.quit());
+///     return run_app(a)?;
+/// }
+/// ```
 fn run_app(App a) -> Result<(), TtyError> {
     let out = stdout();
     let raw = raw_mode(stdin())?;
