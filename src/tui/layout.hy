@@ -17,7 +17,7 @@ enum Constraint {
     Max(int),
 }
 
-/// Base size before leftover space is shared out.
+// Base size before leftover space is shared out.
 fn base_of(Constraint c, int avail, int natural) -> int {
     return match c {
         Constraint::Fixed(n) => pos(n),
@@ -37,7 +37,7 @@ fn weight_of(Constraint c) -> int {
     };
 }
 
-/// Upper bound on the leftover share (-1 = none).
+// Upper bound on the leftover share (-1 = none).
 fn cap_of(Constraint c) -> int {
     return match c {
         Constraint::Max(n) => pos(n),
@@ -52,8 +52,8 @@ fn pos(int n) -> int {
     return n;
 }
 
-/// `total` split as `parts` proportionally to `weights`, flooring and
-/// handing the remainder out one cell at a time from the first part.
+// `total` split as `parts` proportionally to `weights`, flooring and
+// handing the remainder out one cell at a time from the first part.
 fn share(int total, Vec<int> weights) -> Vec<int> {
     let out: Vec<int> = Vec::new();
     let sum = 0;
@@ -89,6 +89,19 @@ fn share(int total, Vec<int> weights) -> Vec<int> {
 /// they are shrunk in proportion. What is left goes to fill, min and
 /// max children by weight, with max children capped. Leftover space with
 /// no fill child to take it stays unused at the end.
+///
+/// # Examples
+///
+/// ```
+/// use tui::layout::{Constraint, split};
+/// # use tests::assert;
+/// let cs: Vec<Constraint> = [Constraint::Fixed(5), Constraint::Fill(1), Constraint::Fill(2)];
+/// let none: Vec<int> = Vec::new();
+/// let sizes = split(21, cs, none, 0);
+/// assert!(sizes[0] == 5 && sizes[1] == 6 && sizes[2] == 10);
+/// let gapped = split(21, cs, none, 2);
+/// assert!(gapped[0] + gapped[1] + gapped[2] == 17);
+/// ```
 fn split(int total, Vec<Constraint> cs, Vec<int> naturals, int gap) -> Vec<int> {
     let n = cs.len();
     let out: Vec<int> = Vec::new();
@@ -167,6 +180,18 @@ fn split(int total, Vec<Constraint> cs, Vec<int> naturals, int gap) -> Vec<int> 
 /// bottom inside `area`, sized by `sizes` along the main axis, `gap`
 /// cells apart. On the cross axis each child takes `cross[i]` cells
 /// aligned by `align` (`Stretch` ignores `cross`).
+///
+/// # Examples
+///
+/// ```
+/// use tui::layout::stack_rects;
+/// use tui::geom::{Align, rect};
+/// # use tests::assert;
+/// let none: Vec<int> = Vec::new();
+/// let rs = stack_rects(rect(0, 0, 20, 4), true, [5, 15], 0, none, Align::Stretch);
+/// assert!(rs[0].eq(rect(0, 0, 5, 4)));
+/// assert!(rs[1].eq(rect(5, 0, 15, 4)));
+/// ```
 fn stack_rects(
     Rect area,
     bool horizontal,

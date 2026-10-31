@@ -25,10 +25,13 @@ use tui::node::mount;
 /// A cursor over `count` rows shown `height` at a time: the selected
 /// row and the first visible one.
 class Selection {
+    /// Index of the selected row.
     pub selected: int,
+    /// Index of the first visible row.
     pub offset: int,
 }
 
+/// A selection on the first row, scrolled to the top.
 fn selection() -> Selection {
     return new Selection(0, 0);
 }
@@ -91,8 +94,8 @@ fn key_spec(Event e) -> string {
     };
 }
 
-/// For a mouse event: `0` none, `1` left press, `2` wheel up, `3`
-/// wheel down.
+// For a mouse event: `0` none, `1` left press, `2` wheel up, `3`
+// wheel down.
 fn mouse_action(MouseEvent m) -> int {
     return match m.button {
         MouseButton::WheelUp => 2,
@@ -121,25 +124,52 @@ fn scrollbar(Canvas cv, int top, int h, int count, int offset, Style track, Styl
     cv.vline(x, top + pos, size, "┃", thumb);
 }
 
-/// A list of text rows with one selected. Up/Down/PageUp/PageDown/
-/// Home/End move, the wheel scrolls, a click selects, Enter activates.
+/// A list of text rows with one selected. Up/Down (or k/j), PageUp/
+/// PageDown, Home/End move, the wheel scrolls, a click selects, Enter
+/// activates. Keep the `List` to read the selection, and `mount` it to
+/// put it in the tree.
+///
+/// # Examples
+///
+/// ```
+/// use cell::Ref;
+/// use tui::node::{Ctx, mount};
+/// use tui::testing::harness;
+/// use tui::widgets::list::list;
+/// # use tests::assert;
+/// let opened = Ref::new(-1);
+/// let l = list(["apple", "banana", "cherry"]).marked("> ");
+/// l.on_activate(fn (int i, Ctx c) use (opened) => opened.set(i));
+/// let h = harness(mount(l), 10, 3);
+/// h.keys("down down up enter");
+/// assert!(l.value() == "banana" && opened.get() == 1);
+/// assert!(h.row(1) == "> banana  ");
+/// ```
 shared class List {
+    /// The rows.
     pub items: Vec<string>,
+    /// The selected row and scroll position.
     pub sel: Selection,
     /// Drawn before the selected row ("" for none; other rows get as
     /// many spaces).
     pub marker: string,
+    /// Called with the new index when the selection moves.
     pub on_select: fn(int, Ctx) -> (),
+    /// Called with the selected index on Enter (or a click on the selected
+    /// row).
     pub on_activate: fn(int, Ctx) -> (),
     /// Rows shown in the last frame.
     pub height: int,
 }
 
 impl List {
+    /// A list of `items` with the first selected, no marker and no
+    /// callbacks.
     pub static fn new(Vec<string> items) -> List {
         return new List(items, selection(), "", fn (int i, Ctx c) {}, fn (int i, Ctx c) {}, 1);
     }
 
+    /// Index of the selected row.
     pub fn selected() -> int {
         return self.sel.selected;
     }
@@ -153,26 +183,32 @@ impl List {
         return self.items[self.sel.selected];
     }
 
+    /// Select row `i` (clamped into range) and scroll it into view, without
+    /// calling `on_select`.
     pub fn select(int i) {
         self.sel.selected = i;
         self.sel.fit(self.items.len(), self.height);
     }
 
+    /// Draw `m` before the selected row (builder style).
     pub fn marked(string m) -> List {
         self.marker = m;
         return self;
     }
 
+    /// Call `f` when the selection moves (builder style).
     pub fn on_select(fn(int, Ctx) -> () f) -> List {
         self.on_select = f;
         return self;
     }
 
+    /// Call `f` on Enter (builder style).
     pub fn on_activate(fn(int, Ctx) -> () f) -> List {
         self.on_activate = f;
         return self;
     }
 
+    /// Call `on_select` when the selection is no longer `before`.
     pub fn changed(int before, Ctx ctx) {
         if self.items.len() > 0 && self.sel.selected != before {
             let f = self.on_select;
@@ -180,6 +216,7 @@ impl List {
         }
     }
 
+    /// Call `on_activate` for the selected row (nothing on an empty list).
     pub fn activate(Ctx ctx) {
         if self.items.len() > 0 {
             let f = self.on_activate;
@@ -272,34 +309,65 @@ impl Component for List {
     }
 }
 
+/// A `List` of `items` (see `List::new`).
 fn list(Vec<string> items) -> List {
     return List::new(items);
 }
 
 /// A table column: header, width constraint and alignment.
 class TableColumn {
+    /// Header text.
     pub title: string,
+    /// How wide the column is (`Auto` sizes to the widest cell).
     pub width: Constraint,
+    /// Alignment of the header and cells (`Start` by default).
     pub align: Align,
 }
 
+/// A left-aligned column titled `title`, sized by `w`.
 fn table_column(string title, Constraint w) -> TableColumn {
     return new TableColumn(title, w, Align::Start);
 }
 
 /// Rows of cells under a header, with one row selected; keys and mouse
 /// as for `List`.
+///
+/// # Examples
+///
+/// ```
+/// use tui::layout::Constraint;
+/// use tui::node::mount;
+/// use tui::testing::harness;
+/// use tui::widgets::list::{Table, TableColumn, table_column};
+/// # use tests::assert;
+/// let cols: Vec<TableColumn> = [table_column("Name", Constraint::Auto), table_column("Age", Constraint::Fill(1))];
+/// let rows: Vec<Vec<string>> = [["Ada", "36"], ["Linus", "54"]];
+/// let t = Table::new(cols, rows);
+/// let h = harness(mount(t), 12, 3);
+/// h.key("down");
+/// assert!(t.selected() == 1);
+/// assert!(h.row(0) == "Name  Age   ");
+/// assert!(h.row(2) == "Linus 54    ");
+/// ```
 shared class Table {
+    /// The columns, left to right.
     pub columns: Vec<TableColumn>,
+    /// The rows, each a cell per column.
     pub rows: Vec<Vec<string>>,
+    /// The selected row and scroll position.
     pub sel: Selection,
+    /// Whether the header row is drawn (`true` by default).
     pub header: bool,
+    /// Called with the new index when the selection moves.
     pub on_select: fn(int, Ctx) -> (),
+    /// Called with the selected index on Enter.
     pub on_activate: fn(int, Ctx) -> (),
+    /// Rows shown in the last frame, header included.
     pub height: int,
 }
 
 impl Table {
+    /// A table of `rows` under `columns`, header shown, first row selected.
     pub static fn new(Vec<TableColumn> columns, Vec<Vec<string>> rows) -> Table {
         return new Table(
             columns,
@@ -312,15 +380,18 @@ impl Table {
         );
     }
 
+    /// Index of the selected row.
     pub fn selected() -> int {
         return self.sel.selected;
     }
 
+    /// Call `f` when the selection moves (builder style).
     pub fn on_select(fn(int, Ctx) -> () f) -> Table {
         self.on_select = f;
         return self;
     }
 
+    /// Call `f` on Enter (builder style).
     pub fn on_activate(fn(int, Ctx) -> () f) -> Table {
         self.on_activate = f;
         return self;
@@ -347,6 +418,7 @@ impl Table {
         return split(w, cs, nat, 1);
     }
 
+    /// Rows available for data in the last frame (at least 1).
     pub fn body_height() -> int {
         if self.header {
             return imax(self.height - 1, 1);

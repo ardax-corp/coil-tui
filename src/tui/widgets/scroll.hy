@@ -21,26 +21,34 @@ use tui::widgets::list::scrollbar;
 /// because nothing inside can take it) Up/Down/Home/End. Keeps the
 /// focused node inside it in view.
 shared class Scroll {
+    /// The scrolled content.
     pub child: Node,
+    /// `[child]`, for `children`.
     pub kids: Vec<Node>,
+    /// Rows scrolled past at the top.
     pub offset: int,
+    /// The content's measured height in the last frame.
     pub content_h: int,
+    /// Rows visible in the last frame.
     pub view_h: int,
     /// Absolute row of the content's top in the last frame.
     pub content_top: int,
 }
 
 impl Scroll {
+    /// A scroll view over `child`, at the top.
     pub static fn new(Node child) -> Scroll {
         let kids: Vec<Node> = Vec::new();
         kids.push(child);
         return new Scroll(child, kids, 0, 0, 0, 0);
     }
 
+    /// Scroll so row `y` of the content is at the top (clamped into range).
     pub fn scroll_to(int y) {
         self.offset = clamp(y, 0, imax(self.content_h - self.view_h, 0));
     }
 
+    /// Scroll down `n` rows (up when negative).
     pub fn scroll_by(int n) {
         self.scroll_to(self.offset + n);
     }
@@ -140,6 +148,20 @@ impl Component for Scroll {
     }
 }
 
+/// A scroll view node over `child` (see `Scroll`).
+///
+/// # Examples
+///
+/// ```
+/// use tui::testing::harness;
+/// use tui::widgets::scroll::scroll;
+/// use tui::widgets::text::text;
+/// # use tests::assert;
+/// let h = harness(scroll(text("1\n2\n3\n4\n5")), 4, 2);
+/// assert!(h.row(0).starts_with("1"));
+/// h.key("pagedown");
+/// assert!(!h.row(0).starts_with("1"));
+/// ```
 fn scroll(Node child) -> Node {
     return mount(Scroll::new(child));
 }

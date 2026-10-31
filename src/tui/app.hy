@@ -26,25 +26,53 @@ use tui::node::ctx;
 use tui::node::set_current;
 use tui::theme::Theme;
 
-/// A key binding handled when no component consumed the key.
+// A key binding handled when no component consumed the key.
 class Binding {
     pub spec: string,
     pub f: fn(Ctx) -> (),
 }
 
+/// The application: a stack of layers (the root first, dialogs and popups
+/// on top), focus, event routing, key bindings, timers and drawing. It
+/// does no terminal I/O: `tui::run::run_app` drives one from a terminal
+/// and `tui::testing::Harness` from tests.
+///
+/// Keys go to the focused node and bubble up to its ancestors; keys no
+/// node consumed go to the `bind` bindings, then Tab / Shift-Tab move
+/// focus and Ctrl-C quits.
+///
+/// # Examples
+///
+/// ```
+/// use cli::color::ColorLevel;
+/// use tui::app::app;
+/// use tui::node::Ctx;
+/// use tui::widgets::text::text;
+/// use cli::keys::{Key, CTRL, key};
+/// # use tests::assert;
+/// let a = app(text("hi"), ColorLevel::None);
+/// a.resize(10, 2);
+/// a.bind("ctrl+q", fn (Ctx c) => c.quit());
+/// assert!(a.draw() != "");
+/// assert!(a.last.row_text(0) == "hi        ");
+/// a.dispatch(key(Key::Char(113), CTRL));
+/// assert!(!a.running);
+/// ```
 shared class App {
-    /// Base layer first; only the top one gets input and focus.
+    // Base layer first; only the top one gets input and focus.
     layers: Vec<Node>,
-    /// Focus to give back when the layer above is popped.
+    // Focus to give back when the layer above is popped.
     saved: Vec<Option<Node>>,
+    /// The context handlers get: theme, clock, focus and requests.
     pub ctx: Ctx,
     screen: Screen,
     bindings: Vec<Binding>,
     dirty: bool,
+    /// `false` once something asked to quit; the runner then stops.
     pub running: bool,
     /// The buffer of the last drawn frame.
     pub last: Buffer,
-    /// Whether the last frame showed the cursor, and where.
+    // Whether the last frame showed the cursor, and where.
     cursor_on: bool,
     cursor_x: int,
     cursor_y: int,
@@ -71,8 +99,8 @@ fn app(Node root, ColorLevel level) -> App {
     return a;
 }
 
-/// Focusable nodes under `n`, depth first. Hidden nodes and disabled
-/// nodes hide their whole subtree.
+// Focusable nodes under `n`, depth first. Hidden nodes and disabled
+// nodes hide their whole subtree.
 fn collect_focus(Node n, Vec<Node> out) {
     if !n.visible || n.disabled {
         return;
@@ -85,7 +113,7 @@ fn collect_focus(Node n, Vec<Node> out) {
     }
 }
 
-/// The path from `n` down to `target` (both included), into `out`.
+// The path from `n` down to `target` (both included), into `out`.
 fn find_path(Node n, Node target, Vec<Node> out) -> bool {
     out.push(n);
     if n == target {
@@ -100,8 +128,8 @@ fn find_path(Node n, Node target, Vec<Node> out) -> bool {
     return false;
 }
 
-/// The path to the deepest visible node whose visible area holds
-/// (`x`, `y`). Later children are on top, so they are tried first.
+// The path to the deepest visible node whose visible area holds
+// (`x`, `y`). Later children are on top, so they are tried first.
 fn hit_path(Node n, int x, int y, Vec<Node> out) -> bool {
     if !n.visible || !n.clip.contains(x, y) {
         return false;
@@ -131,7 +159,7 @@ fn find_id(Node n, string id) -> Option<Node> {
     return Option::None;
 }
 
-/// Lay out and paint `n` into `cv` (its own area), then its children.
+// Lay out and paint `n` into `cv` (its own area), then its children.
 fn paint(Node n, Canvas cv) {
     n.rect = cv.area;
     n.clip = cv.clip;
@@ -157,14 +185,17 @@ fn paint(Node n, Canvas cv) {
 }
 
 impl App {
+    /// The top layer, the one that gets input and focus.
     pub fn top() -> Node {
         return self.layers[self.layers.len() - 1];
     }
 
+    /// Number of layers, the base one included.
     pub fn layer_count() -> int {
         return self.layers.len();
     }
 
+    /// Draw with theme `t` from the next frame on.
     pub fn set_theme(Theme t) {
         self.ctx.theme = t;
         self.dirty = true;
@@ -176,6 +207,7 @@ impl App {
         self.bindings.push(new Binding(spec, f));
     }
 
+    /// Set the screen size; the next `draw` repaints everything.
     pub fn resize(int cols, int rows) {
         self.screen.resize(cols, rows);
         self.cursor_on = false;
@@ -191,10 +223,12 @@ impl App {
         self.dirty = true;
     }
 
+    /// Screen width in cells.
     pub fn cols() -> int {
         return self.screen.cols();
     }
 
+    /// Screen height in cells.
     pub fn rows() -> int {
         return self.screen.rows();
     }
@@ -212,6 +246,7 @@ impl App {
         return Option::None;
     }
 
+    /// The node with keyboard focus.
     pub fn focused() -> Option<Node> {
         return self.ctx.focused;
     }
@@ -243,6 +278,8 @@ impl App {
         return false;
     }
 
+    /// Focus the node named `id` (see `focus`); false when there is none or
+    /// it cannot take focus.
     pub fn focus_id(string id) -> bool {
         return match self.find(id) {
             Option::Some(n) => self.focus(n),
@@ -277,9 +314,9 @@ impl App {
         self.dirty = true;
     }
 
-    /// Keep focus on something focusable in the top layer: when the
-    /// focused node left the chain (hidden, disabled, removed), focus
-    /// the first one.
+    // Keep focus on something focusable in the top layer: when the
+    // focused node left the chain (hidden, disabled, removed), focus
+    // the first one.
     fn settle_focus() {
         let chain = self.focus_chain();
         for f in chain {
@@ -294,6 +331,7 @@ impl App {
         }
     }
 
+    /// Open `n` as a layer on top; it takes input and focus until popped.
     pub fn push_layer(Node n) {
         self.saved.push(self.ctx.focused);
         self.layers.push(n);
@@ -313,7 +351,7 @@ impl App {
         self.dirty = true;
     }
 
-    /// Carry out what handlers asked of the context.
+    // Carry out what handlers asked of the context.
     fn apply_requests() {
         let c = self.ctx;
         while c.pops > 0 {
@@ -346,7 +384,7 @@ impl App {
         c.current = Option::None;
     }
 
-    /// Offer `e` to the nodes of `path` from the deepest up.
+    // Offer `e` to the nodes of `path` from the deepest up.
     fn bubble(Vec<Node> path, Event e) -> bool {
         let i = path.len() - 1;
         while i >= 0 {
@@ -402,8 +440,8 @@ impl App {
         return false;
     }
 
-    /// Mouse events go to the deepest node under the pointer and bubble
-    /// up; a left press first focuses the deepest focusable node there.
+    // Mouse events go to the deepest node under the pointer and bubble
+    // up; a left press first focuses the deepest focusable node there.
     fn route_mouse(MouseEvent m, Event e) -> bool {
         let path: Vec<Node> = Vec::new();
         hit_path(self.top(), m.col - 1, m.row - 1, path);

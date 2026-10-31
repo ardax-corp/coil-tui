@@ -20,21 +20,27 @@ use tui::node::mount;
 /// Left/Right switch; Ctrl-PageUp/PageDown switch from anywhere inside;
 /// clicking a title switches to it.
 shared class Tabs {
+    /// The titles in the bar, one per page.
     pub titles: Vec<string>,
+    /// The pages; only the active one is visible.
     pub pages: Vec<Node>,
+    /// Index of the page shown.
     pub active: int,
+    /// Called with the new index when the page changes.
     pub on_change: fn(int, Ctx) -> (),
     /// Start column of each title in the last frame (and the end).
     pub stops: Vec<int>,
 }
 
 impl Tabs {
+    /// Tabs over `pages` titled `titles`, the first page shown.
     pub static fn new(Vec<string> titles, Vec<Node> pages) -> Tabs {
         let t = new Tabs(titles, pages, 0, fn (int i, Ctx c) {}, Vec::new());
         t.show();
         return t;
     }
 
+    /// Make only the active page visible.
     pub fn show() {
         let i = 0;
         while i < self.pages.len() {
@@ -55,6 +61,7 @@ impl Tabs {
         return true;
     }
 
+    /// Call `f` with the new index on each change (builder style).
     pub fn on_change(fn(int, Ctx) -> () f) -> Tabs {
         self.on_change = f;
         return self;
@@ -164,6 +171,21 @@ impl Component for Tabs {
     }
 }
 
+/// A tabs node over `pages` titled `titles` (see `Tabs`).
+///
+/// # Examples
+///
+/// ```
+/// use text::Searchable;
+/// use tui::testing::harness;
+/// use tui::widgets::tabs::tabs;
+/// use tui::widgets::text::text;
+/// # use tests::assert;
+/// let h = harness(tabs(["One", "Two"], [text("first page"), text("second page")]), 20, 3);
+/// assert!(h.text().contains("first page"));
+/// h.key("right");
+/// assert!(h.text().contains("second page"));
+/// ```
 fn tabs(Vec<string> titles, Vec<Node> pages) -> Node {
     return mount(Tabs::new(titles, pages));
 }

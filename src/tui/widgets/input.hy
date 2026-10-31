@@ -26,7 +26,7 @@ use tui::node::Node;
 use tui::node::Ctx;
 use tui::node::mount;
 
-/// The key spec of a key event, or "" for anything else.
+// The key spec of a key event, or "" for anything else.
 fn key_spec(Event e) -> string {
     return match e {
         Event::Key(k) => describe_key(k),
@@ -34,7 +34,7 @@ fn key_spec(Event e) -> string {
     };
 }
 
-/// Whether `e` is a left-button press.
+// Whether `e` is a left-button press.
 fn left_press(Event e) -> bool {
     return match e {
         Event::Mouse(m) => match m.kind {
@@ -57,11 +57,14 @@ fn nothing(Ctx ctx) {}
 
 /// A push button: Enter, Space or a click calls `on_press`.
 shared class Button {
+    /// The text inside the brackets.
     pub label: string,
+    /// Called when the button is pressed.
     pub on_press: fn(Ctx) -> (),
 }
 
 impl Button {
+    /// A button labelled `label` calling `on_press`.
     pub static fn new(string label, fn(Ctx) -> () on_press) -> Button {
         return new Button(label, on_press);
     }
@@ -98,22 +101,29 @@ impl Component for Button {
     }
 }
 
+/// A button node: `[ label ]`, focusable, sized to its label; Enter,
+/// Space or a click calls `on_press`.
 fn button(string label, fn(Ctx) -> () on_press) -> Node {
     return mount(Button::new(label, on_press));
 }
 
 /// `[x] label`; Enter, Space or a click toggles it.
 shared class Checkbox {
+    /// Text after the box.
     pub label: string,
+    /// Whether the box is ticked.
     pub checked: bool,
+    /// Called with the new state after each toggle.
     pub on_change: fn(bool, Ctx) -> (),
 }
 
 impl Checkbox {
+    /// A checkbox labelled `label`, ticked when `checked`, with no callback.
     pub static fn new(string label, bool checked) -> Checkbox {
         return new Checkbox(label, checked, fn (bool b, Ctx ctx) {});
     }
 
+    /// Call `f` with the new state after each toggle (builder style).
     pub fn on_change(fn(bool, Ctx) -> () f) -> Checkbox {
         self.on_change = f;
         return self;
@@ -160,6 +170,22 @@ impl Component for Checkbox {
     }
 }
 
+/// A checkbox node calling `on_change` with the new state.
+///
+/// # Examples
+///
+/// ```
+/// use cell::Ref;
+/// use tui::node::Ctx;
+/// use tui::testing::harness;
+/// use tui::widgets::input::checkbox;
+/// # use tests::assert;
+/// let on = Ref::new(false);
+/// let h = harness(checkbox("Dark mode", false, fn (bool b, Ctx c) use (on) => on.set(b)), 14, 1);
+/// h.key("space");
+/// assert!(on.get());
+/// assert!(h.row(0) == "[x] Dark mode ");
+/// ```
 fn checkbox(string label, bool checked, fn(bool, Ctx) -> () on_change) -> Node {
     return mount(Checkbox::new(label, checked).on_change(on_change));
 }
@@ -167,21 +193,27 @@ fn checkbox(string label, bool checked, fn(bool, Ctx) -> () on_change) -> Node {
 /// One choice out of several, listed top to bottom. Up/Down (or a
 /// click) select.
 shared class RadioGroup {
+    /// The choices, top to bottom.
     pub options: Vec<string>,
+    /// Index of the selected choice (-1 for none).
     pub selected: int,
+    /// Called with the new index when the selection changes.
     pub on_change: fn(int, Ctx) -> (),
 }
 
 impl RadioGroup {
+    /// A group of `options` with `selected` chosen and no callback.
     pub static fn new(Vec<string> options, int selected) -> RadioGroup {
         return new RadioGroup(options, selected, fn (int i, Ctx ctx) {});
     }
 
+    /// Call `f` with the new index on each change (builder style).
     pub fn on_change(fn(int, Ctx) -> () f) -> RadioGroup {
         self.on_change = f;
         return self;
     }
 
+    /// The selected option's text, or "" when none is selected.
     pub fn value() -> string {
         if self.selected >= 0 && self.selected < self.options.len() {
             return self.options[self.selected];
@@ -189,6 +221,8 @@ impl RadioGroup {
         return "";
     }
 
+    /// Select option `i` and call `on_change`; false (and nothing happens)
+    /// when `i` is out of range or already selected.
     pub fn select(int i, Ctx ctx) -> bool {
         if i < 0 || i >= self.options.len() || i == self.selected {
             return false;
@@ -264,6 +298,7 @@ impl Component for RadioGroup {
     }
 }
 
+/// A radio group node calling `on_change` with the new index.
 fn radio_group(Vec<string> options, int selected, fn(int, Ctx) -> () on_change) -> Node {
     return mount(RadioGroup::new(options, selected).on_change(on_change));
 }
@@ -272,7 +307,9 @@ fn radio_group(Vec<string> options, int selected, fn(int, Ctx) -> () on_change) 
 /// Tab, Esc and Ctrl-C are left to the app; Up/Down browse the history
 /// only when it has entries.
 shared class TextInput {
+    /// The line editor holding the text, cursor and history.
     pub editor: Editor,
+    /// Shown, dimmed, while the field is empty.
     pub placeholder: string,
     /// Shown instead of each character when not "" (passwords).
     pub mask: string,
@@ -280,11 +317,15 @@ shared class TextInput {
     pub width: int,
     /// Empty the field after Enter (and add the line to the history).
     pub clear_on_submit: bool,
+    /// Called with the new text after each edit.
     pub on_change: fn(string, Ctx) -> (),
+    /// Called with the text when Enter is pressed.
     pub on_submit: fn(string, Ctx) -> (),
 }
 
 impl TextInput {
+    /// An empty field showing `placeholder`, 20 columns wide, with a
+    /// 100-entry history.
     pub static fn new(string placeholder) -> TextInput {
         return new TextInput(
             editor(history(100)),
@@ -297,29 +338,36 @@ impl TextInput {
         );
     }
 
+    /// The current text.
     pub fn value() -> string {
         return self.editor.text();
     }
 
+    /// Replace the text and put the cursor at its end.
     pub fn set_value(string s) {
         self.editor.set_text(s);
     }
 
+    /// Show `m` for each character, for passwords (builder style).
     pub fn masked(string m) -> TextInput {
         self.mask = m;
         return self;
     }
 
+    /// Call `f` with the text after each edit (builder style).
     pub fn on_change(fn(string, Ctx) -> () f) -> TextInput {
         self.on_change = f;
         return self;
     }
 
+    /// Call `f` with the text on Enter (builder style).
     pub fn on_submit(fn(string, Ctx) -> () f) -> TextInput {
         self.on_submit = f;
         return self;
     }
 
+    /// Empty the field after Enter and add the line to the history
+    /// (builder style).
     pub fn clearing() -> TextInput {
         self.clear_on_submit = true;
         return self;
@@ -400,6 +448,24 @@ impl Component for TextInput {
     }
 }
 
+/// A text field showing `placeholder`. Keep the `TextInput` to read
+/// `value()`, and `mount` it to put it in the tree.
+///
+/// # Examples
+///
+/// ```
+/// use cell::Ref;
+/// use tui::node::{Ctx, mount};
+/// use tui::testing::harness;
+/// use tui::widgets::input::text_input;
+/// # use tests::assert;
+/// let got = Ref::new("");
+/// let field = text_input("Search").on_submit(fn (string s, Ctx c) use (got) => got.set(s));
+/// let h = harness(mount(field), 20, 1);
+/// h.type_text("cats");
+/// h.key("enter");
+/// assert!(field.value() == "cats" && got.get() == "cats");
+/// ```
 fn text_input(string placeholder) -> TextInput {
     return TextInput::new(placeholder);
 }

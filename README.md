@@ -30,7 +30,21 @@ fn main() {
 }
 ```
 
-This is [examples/hello.hy](examples/hello.hy); [examples/todo.hy](examples/todo.hy) is a bigger one (list, dialogs, key hints).
+This is [examples/hello.hy](examples/hello.hy); [examples/todo.hy](examples/todo.hy) is a bigger one (list, dialogs, key hints). Run it from a checkout with coil-stdlib and coil-cli next to it (`run` reads the colour settings, hence `--allow-env`):
+
+```bash
+coil --allow-env --root ../coil-stdlib/src --root ../coil-cli/src --root src examples/hello.hy
+```
+
+## Use it
+
+With [spool](https://github.com/ardax-corp/spool):
+
+```bash
+spool add tui --git https://github.com/ardax-corp/coil-tui.git --rev <commit SHA>
+```
+
+There are no tags yet, so pin a commit with `--rev`. spool also fetches the `cli` dependency. Without spool, clone this repo, [coil-cli](https://github.com/ardax-corp/coil-cli) and coil-stdlib next to your project and pass `--root ../coil-tui/src --root ../coil-cli/src --root ../coil-stdlib/src` to `coil`.
 
 ## Pieces
 
@@ -41,6 +55,7 @@ This is [examples/hello.hy](examples/hello.hy); [examples/todo.hy](examples/todo
 | `tui::run` | the terminal loop (alternate screen, raw mode, mouse, paste) |
 | `tui::testing` | headless `Harness`: send keys, text, clicks and time; read the screen as text |
 | `tui::layout`, `tui::geom`, `tui::canvas` | constraint solver, rects, clipped drawing |
+| `tui::theme` | `Theme`, the named styles widgets draw with, and `default_theme` |
 | `tui::widgets::layout` | `row`, `column`, `flex`, `stack`, `block`, `pad`, `center`, `align`, `spacer` |
 | `tui::widgets::text` | `text`, `styled`, `text_fn`, `rule` |
 | `tui::widgets::input` | `Button`, `Checkbox`, `RadioGroup`, `TextInput` |
@@ -56,19 +71,24 @@ are, is in [docs/design.md](docs/design.md).
 
 ## Testing a UI
 
+With `root` from the example above:
+
 ```coil
 let h = harness(root, 40, 10);
 h.type_text("Ada");
 h.keys("tab enter");
-assert!(h.row(2) == "Hello, Ada!                             ");
+assert!(h.row(3) == "│Hello, Ada!                           │");
 ```
 
 ## Development
 
-`make test` runs the tests and `make fmt` checks formatting. Both expect
-coil-stdlib and coil-cli checked out next to this repository, or their
-`src` directories passed in `COIL_ROOTS`. `make examples` compiles the
-examples.
+`make test` runs the tests and the doc examples of the modules they
+import, and `make fmt` checks formatting. Both expect coil-stdlib and
+coil-cli checked out next to this repository, or their `src` directories
+passed in `COIL_ROOTS`. `make examples` compiles the examples, and
+`coil test --doc-tests-only src --root ../coil-stdlib/src --root ../coil-cli/src`
+runs only the doc examples. Every public item has `///` docs; most
+examples drive a UI through `tui::testing`.
 
 ## License
 
