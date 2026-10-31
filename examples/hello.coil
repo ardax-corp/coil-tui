@@ -1,6 +1,6 @@
 // The README example: a form with a text input and a button.
 //
-//   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/hello.hy
+//   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/hello.coil
 use cell::Ref;
 use tui::node::Ctx;
 use tui::node::mount;

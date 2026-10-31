@@ -1,7 +1,7 @@
 // A to-do list: a text input adds items, the list shows them, Space
 // toggles done, d deletes (after asking), Tab moves between them.
 //
-//   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/todo.hy
+//   coil --root <stdlib>/src --root <coil-cli>/src --root src examples/todo.coil
 use cli::keys::{Event, describe_key};
 use tui::node::Component;
 use tui::node::Node;
