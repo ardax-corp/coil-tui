@@ -100,6 +100,11 @@ impl Component for Popup {
 /// aligned). Open it with `ctx.push_layer(...)`; buttons usually call
 /// `ctx.pop_layer()`.
 fn dialog(string title, Node body, Vec<Node> buttons) -> Node {
+    return mount(dialog_popup(title, body, buttons));
+}
+
+// The popup `dialog` mounts, for callers that set its `on_close`.
+fn dialog_popup(string title, Node body, Vec<Node> buttons) -> Popup {
     let bar: Vec<Node> = Vec::new();
     bar.push(spacer());
     for b in buttons {
@@ -110,7 +115,7 @@ fn dialog(string title, Node body, Vec<Node> buttons) -> Node {
     let inner = column([body, mount(f).fixed(1)]);
     let b = Block::new(title, inner).padded(1);
     b.chars = rounded_box();
-    return mount(Popup::new(mount(b)));
+    return Popup::new(mount(b));
 }
 
 /// Open a message box with an OK button.
@@ -127,7 +132,7 @@ fn alert(Ctx ctx, string title, string message) {
 }
 
 /// Ask a yes/no question in a dialog; `answer` gets true for Yes, false
-/// for No. Esc closes the dialog without calling `answer`.
+/// for No and for Esc, which closes the dialog.
 ///
 /// # Examples
 ///
@@ -153,9 +158,12 @@ fn alert(Ctx ctx, string title, string message) {
 /// assert!(h.app.layer_count() == 2);
 /// h.key("enter");
 /// assert!(said.get() == "yes" && h.app.layer_count() == 1);
+/// h.key("enter");
+/// h.key("esc");
+/// assert!(said.get() == "no" && h.app.layer_count() == 1);
 /// ```
 fn confirm(Ctx ctx, string title, string message, fn(bool, Ctx) -> () answer) {
-    let d = dialog(
+    let p = dialog_popup(
         title,
         text(message),
         [
@@ -175,7 +183,11 @@ fn confirm(Ctx ctx, string title, string message, fn(bool, Ctx) -> () answer) {
             ),
         ],
     );
-    ctx.push_layer(d);
+    // The popup has already popped itself when Esc calls this.
+    p.on_close = fn (Ctx c) use (answer) {
+        answer(false, c);
+    };
+    ctx.push_layer(mount(p));
 }
 
 /// Open a popup menu at (`x`, `y`): Enter or a click on an item closes
