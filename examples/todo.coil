@@ -21,7 +21,7 @@ use tui::widgets::list::list;
 use tui::widgets::status::key_hints;
 use tui::widgets::dialog::confirm;
 
-class Todo {
+shared class Todo {
     pub items: Vec<string>,
     pub done: Vec<bool>,
     pub view: List,

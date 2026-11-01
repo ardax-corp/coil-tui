@@ -96,6 +96,33 @@ test("confirm answers yes or no") {
     assert!(h.app.layer_count() == 1);
 }
 
+test("confirm answers no on esc") {
+    let ans = Ref::new(0);
+    let opener = button(
+        "Ask",
+        fn (Ctx c) use (ans) {
+            confirm(
+                c,
+                "Sure?",
+                "Delete it",
+                fn (bool yes, Ctx x) use (ans) {
+                    if yes {
+                        ans.set(1);
+                    } else {
+                        ans.set(2);
+                    }
+                },
+            );
+        },
+    );
+    let h = harness(column([opener]), 24, 9);
+    h.key("enter");
+    assert!(h.app.layer_count() == 2);
+    h.key("esc");
+    assert!(h.app.layer_count() == 1);
+    assert!(ans.get() == 2);
+}
+
 test("menu picks an item") {
     let got = Ref::new(-1);
     let opener = button(

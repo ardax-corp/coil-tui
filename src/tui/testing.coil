@@ -89,13 +89,26 @@ fn named_key(string name) -> Option<Key> {
 }
 
 /// The key event for a spec as `cli::keys::describe_key` writes it:
-/// `"ctrl+c"`, `"shift+tab"`, `"f5"`, `"space"`, `"a"`. Panics on a
-/// name it does not know, so a typo fails the test.
+/// `"ctrl+c"`, `"shift+tab"`, `"f5"`, `"space"`, `"a"`. The plus key is
+/// `"+"`, with modifiers `"ctrl++"`. Panics on a name it does not know,
+/// so a typo fails the test.
 fn parse_key(string spec) -> Event {
     let parts: Vec<string> = spec.split("+");
+    // The parts before `name` are modifiers. A trailing `+` is the plus
+    // key itself: `"+"` splits to `["", ""]` and `"ctrl++"` to
+    // `["ctrl", "", ""]`, so the empty part before it is the separator.
+    let n_mods = parts.len() - 1;
+    let name = parts[n_mods];
+    if spec.ends_with("+") {
+        n_mods = parts.len() - 2;
+        if parts[n_mods] != "" {
+            panic ("unknown key in key spec: " + spec);
+        }
+        name = "+";
+    }
     let mods = 0;
     let i = 0;
-    while i < parts.len() - 1 {
+    while i < n_mods {
         let m = parts[i];
         if m == "ctrl" {
             mods = mods | CTRL;
@@ -109,10 +122,6 @@ fn parse_key(string spec) -> Event {
             panic ("unknown modifier in key spec: " + spec);
         }
         i++;
-    }
-    let name = parts[parts.len() - 1];
-    if name == "" && spec.ends_with("+") {
-        name = "+";
     }
     return match named_key(name) {
         Option::Some(k) => key(k, mods),

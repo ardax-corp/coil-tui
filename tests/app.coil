@@ -125,6 +125,25 @@ test("parse_key round-trips describe") {
     assert!(describe(parse_key("alt+enter")) == "alt+enter");
 }
 
+test("parse_key reads the plus key, alone and with modifiers") {
+    assert!(
+        match parse_key("+") {
+            Event::Key(k) => k.key == Key::Char(43) && k.mods == 0,
+            default => false,
+        },
+    );
+    assert!(describe(parse_key("+")) == "+");
+    assert!(describe(parse_key("ctrl++")) == "ctrl++");
+    assert!(describe(parse_key("ctrl+alt++")) == "ctrl+alt++");
+    assert!(describe(parse_key("ctrl+a")) == "ctrl+a");
+}
+
+test("the harness sends the plus key") {
+    let h = harness(field("a"), 6, 1);
+    assert!(h.key("+"));
+    assert!(h.key("shift++"));
+}
+
 test("first draw paints, focuses the first field and then idles") {
     let h = harness(mount(col(three())), 6, 4);
     assert!(h.text() == ">a    \n b    \n c    \n      ");
