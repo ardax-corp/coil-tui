@@ -30,10 +30,10 @@ fn main() {
 }
 ```
 
-This is [examples/hello.hy](examples/hello.hy); [examples/todo.hy](examples/todo.hy) is a bigger one (list, dialogs, key hints). Run it from a checkout with coil-stdlib and coil-cli next to it (`run` reads the colour settings, hence `--allow-env`):
+This is [examples/hello.coil](examples/hello.coil); [examples/todo.coil](examples/todo.coil) is a bigger one (list, dialogs, key hints). Run it from a checkout with coil-stdlib and coil-cli next to it (`run` reads the colour settings, hence `--allow-env`):
 
 ```bash
-coil --allow-env --root ../coil-stdlib/src --root ../coil-cli/src --root src examples/hello.hy
+coil --allow-env --root ../coil-stdlib/src --root ../coil-cli/src --root src examples/hello.coil
 ```
 
 ## Use it
