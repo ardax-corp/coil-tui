@@ -19,7 +19,7 @@ fn lines(int n) -> Vec<Node> {
     let out: Vec<Node> = Vec::new();
     let i = 0;
     while i < n {
-        out.push(text("line " + show(i)));
+        out.push(text("line " + i.show()));
         i++;
     }
     return out;

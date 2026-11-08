@@ -141,7 +141,7 @@ fn main() {
     let kids: Vec<Node> = Vec::new();
     kids.push(lnode);
     let tl = mount(new TodoList(todo, lnode, kids));
-    let status = text_fn(fn () use (todo) => show(todo.left()) + " left");
+    let status = text_fn(fn () use (todo) => todo.left().show() + " left");
     let hints = mount(
         key_hints().add("Tab", "switch").add("Space", "done").add("d", "delete").add("^C", "quit"),
     );
