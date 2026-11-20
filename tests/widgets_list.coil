@@ -21,7 +21,7 @@ fn items(int n) -> Vec<string> {
     let out: Vec<string> = Vec::new();
     let i = 0;
     while i < n {
-        out.push("item " + show(i));
+        out.push("item " + i.show());
         i++;
     }
     return out;
