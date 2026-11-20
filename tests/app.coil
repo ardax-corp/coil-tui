@@ -68,7 +68,7 @@ fn field(string name) -> Node {
 }
 
 // A vertical stack of children, for the tests.
-class Col {
+shared class Col {
     pub kids: Vec<Node>,
     pub enters: int,
 }

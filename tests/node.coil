@@ -18,7 +18,7 @@ use cli::keys::Event;
 use cli::keys::Key;
 use cli::keys::key;
 
-class Label {
+shared class Label {
     pub text: string,
     pub hits: int,
 }
